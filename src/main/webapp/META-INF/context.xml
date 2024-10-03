@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Packaged with the WAR so the JNDI DataSource is declared alongside the
+  application. The username/password below are local-development
+  placeholders only - see README "Database setup". For any real deployment,
+  override this Resource in Tomcat's own conf/[engine]/[host]/<app>.xml
+  (which takes precedence over the one bundled in the WAR) rather than
+  editing/committing real credentials here.
+-->
+<Context>
+    <Resource name="jdbc/campusdb"
+              auth="Container"
+              type="javax.sql.DataSource"
+              driverClassName="com.mysql.cj.jdbc.Driver"
+              url="jdbc:mysql://localhost:3306/campus_management?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC"
+              username="campus_app"
+              password="campus_app_password"
+              initialSize="5"
+              maxTotal="20"
+              maxIdle="10"
+              maxWaitMillis="10000"
+              testOnBorrow="true"
+              validationQuery="SELECT 1"/>
+</Context>
