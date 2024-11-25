@@ -19,9 +19,15 @@ public class JdbcGradeDao implements GradeDao {
         this.dataSource = dataSource;
     }
 
+    private static final String JOIN_SELECT =
+            "SELECT g.*, c.code AS course_code, c.title AS course_title "
+                    + "FROM grades g "
+                    + "JOIN enrollments e ON e.id = g.enrollment_id "
+                    + "JOIN courses c ON c.id = e.course_id";
+
     @Override
     public Optional<Grade> findByEnrollmentId(long enrollmentId) {
-        String sql = "SELECT * FROM grades WHERE enrollment_id = ?";
+        String sql = JOIN_SELECT + " WHERE g.enrollment_id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, enrollmentId);
@@ -35,9 +41,7 @@ public class JdbcGradeDao implements GradeDao {
 
     @Override
     public List<Grade> findByStudentId(long studentId) {
-        String sql = "SELECT g.* FROM grades g "
-                + "JOIN enrollments e ON e.id = g.enrollment_id "
-                + "WHERE e.student_id = ? ORDER BY g.updated_at DESC";
+        String sql = JOIN_SELECT + " WHERE e.student_id = ? ORDER BY g.updated_at DESC";
         List<Grade> grades = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -80,6 +84,8 @@ public class JdbcGradeDao implements GradeDao {
         if (updatedAt != null) {
             g.setUpdatedAt(updatedAt.toLocalDateTime());
         }
+        g.setCourseCode(rs.getString("course_code"));
+        g.setCourseTitle(rs.getString("course_title"));
         return g;
     }
 }

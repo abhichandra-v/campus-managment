@@ -22,9 +22,15 @@ public class JdbcAttendanceDao implements AttendanceDao {
         this.dataSource = dataSource;
     }
 
+    private static final String JOIN_SELECT =
+            "SELECT a.*, c.code AS course_code, c.title AS course_title "
+                    + "FROM attendance a "
+                    + "JOIN enrollments e ON e.id = a.enrollment_id "
+                    + "JOIN courses c ON c.id = e.course_id";
+
     @Override
     public Optional<Attendance> findByEnrollmentAndDate(long enrollmentId, LocalDate date) {
-        String sql = "SELECT * FROM attendance WHERE enrollment_id = ? AND attendance_date = ?";
+        String sql = JOIN_SELECT + " WHERE a.enrollment_id = ? AND a.attendance_date = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, enrollmentId);
@@ -40,7 +46,7 @@ public class JdbcAttendanceDao implements AttendanceDao {
 
     @Override
     public List<Attendance> findByEnrollmentId(long enrollmentId) {
-        String sql = "SELECT * FROM attendance WHERE enrollment_id = ? ORDER BY attendance_date DESC";
+        String sql = JOIN_SELECT + " WHERE a.enrollment_id = ? ORDER BY a.attendance_date DESC";
         List<Attendance> records = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -58,9 +64,7 @@ public class JdbcAttendanceDao implements AttendanceDao {
 
     @Override
     public List<Attendance> findByStudentId(long studentId) {
-        String sql = "SELECT a.* FROM attendance a "
-                + "JOIN enrollments e ON e.id = a.enrollment_id "
-                + "WHERE e.student_id = ? ORDER BY a.attendance_date DESC";
+        String sql = JOIN_SELECT + " WHERE e.student_id = ? ORDER BY a.attendance_date DESC";
         List<Attendance> records = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -102,6 +106,8 @@ public class JdbcAttendanceDao implements AttendanceDao {
         if (recordedAt != null) {
             a.setRecordedAt(recordedAt.toLocalDateTime());
         }
+        a.setCourseCode(rs.getString("course_code"));
+        a.setCourseTitle(rs.getString("course_title"));
         return a;
     }
 }
