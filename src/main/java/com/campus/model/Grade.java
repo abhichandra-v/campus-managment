@@ -10,6 +10,8 @@ public class Grade {
     private String grade;
     private LocalDateTime gradedAt;
     private LocalDateTime updatedAt;
+    private String courseCode;
+    private String courseTitle;
 
     public Grade() {
     }
@@ -52,5 +54,21 @@ public class Grade {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCourseCode() {
+        return courseCode;
+    }
+
+    public void setCourseCode(String courseCode) {
+        this.courseCode = courseCode;
+    }
+
+    public String getCourseTitle() {
+        return courseTitle;
+    }
+
+    public void setCourseTitle(String courseTitle) {
+        this.courseTitle = courseTitle;
     }
 }

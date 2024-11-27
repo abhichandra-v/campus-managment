@@ -11,6 +11,8 @@ public class Attendance {
     private LocalDate attendanceDate;
     private AttendanceStatus status;
     private LocalDateTime recordedAt;
+    private String courseCode;
+    private String courseTitle;
 
     public Attendance() {
     }
@@ -53,5 +55,21 @@ public class Attendance {
 
     public void setRecordedAt(LocalDateTime recordedAt) {
         this.recordedAt = recordedAt;
+    }
+
+    public String getCourseCode() {
+        return courseCode;
+    }
+
+    public void setCourseCode(String courseCode) {
+        this.courseCode = courseCode;
+    }
+
+    public String getCourseTitle() {
+        return courseTitle;
+    }
+
+    public void setCourseTitle(String courseTitle) {
+        this.courseTitle = courseTitle;
     }
 }

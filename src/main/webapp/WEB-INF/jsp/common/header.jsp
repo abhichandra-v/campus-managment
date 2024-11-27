@@ -44,3 +44,11 @@
     </div>
 </div>
 <div class="container">
+<c:if test="${not empty sessionScope.flashSuccess}">
+    <div class="alert alert-success"><c:out value="${sessionScope.flashSuccess}"/></div>
+    <c:remove var="flashSuccess" scope="session"/>
+</c:if>
+<c:if test="${not empty sessionScope.flashError}">
+    <div class="alert alert-error"><c:out value="${sessionScope.flashError}"/></div>
+    <c:remove var="flashError" scope="session"/>
+</c:if>
