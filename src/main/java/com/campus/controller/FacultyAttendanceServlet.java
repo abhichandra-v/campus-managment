@@ -1,0 +1,126 @@
+package com.campus.controller;
+
+import com.campus.model.AttendanceStatus;
+import com.campus.model.Course;
+import com.campus.model.Enrollment;
+import com.campus.model.User;
+import com.campus.service.NotFoundException;
+import com.campus.service.UnauthorizedActionException;
+import com.campus.service.ValidationException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Faculty view for marking attendance for a whole course roster on a given date. */
+@WebServlet(name = "FacultyAttendanceServlet", urlPatterns = {"/faculty/attendance"})
+public class FacultyAttendanceServlet extends BaseServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        User user = currentUser(req);
+        long courseId;
+        try {
+            courseId = Long.parseLong(req.getParameter("courseId"));
+        } catch (NumberFormatException | NullPointerException e) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "A courseId is required.");
+            return;
+        }
+
+        LocalDate date = parseDateOrToday(req.getParameter("date"));
+
+        Course course;
+        try {
+            course = requireOwnedCourse(courseId, user.getId());
+        } catch (NotFoundException e) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND, e.getMessage());
+            return;
+        } catch (UnauthorizedActionException e) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+            return;
+        }
+
+        List<Enrollment> roster = services().enrollmentService().findRosterByCourseId(courseId).stream()
+                .filter(e -> e.getStatus() != com.campus.model.EnrollmentStatus.DROPPED)
+                .toList();
+        Map<Long, String> statusByEnrollment = new HashMap<>();
+        for (Enrollment e : roster) {
+            services().attendanceService().findByEnrollmentId(e.getId()).stream()
+                    .filter(a -> a.getAttendanceDate().equals(date))
+                    .findFirst()
+                    .ifPresent(a -> statusByEnrollment.put(e.getId(), a.getStatus().name()));
+        }
+
+        req.setAttribute("pageTitle", "Attendance - " + course.getCode());
+        req.setAttribute("course", course);
+        req.setAttribute("roster", roster);
+        req.setAttribute("date", date.toString());
+        req.setAttribute("statusByEnrollment", statusByEnrollment);
+        req.setAttribute("statuses", AttendanceStatus.values());
+        req.getRequestDispatcher("/WEB-INF/jsp/faculty/attendance.jsp").forward(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        User user = currentUser(req);
+        long courseId;
+        LocalDate date;
+        try {
+            courseId = Long.parseLong(req.getParameter("courseId"));
+            date = LocalDate.parse(req.getParameter("date"));
+        } catch (NumberFormatException | NullPointerException | DateTimeParseException e) {
+            flashError(req, "Invalid request.");
+            resp.sendRedirect(req.getContextPath() + "/faculty/courses");
+            return;
+        }
+
+        List<Enrollment> roster = services().enrollmentService().findRosterByCourseId(courseId);
+        int recorded = 0;
+        for (Enrollment e : roster) {
+            String statusParam = req.getParameter("status_" + e.getId());
+            if (statusParam == null || statusParam.isBlank()) {
+                continue;
+            }
+            try {
+                AttendanceStatus status = AttendanceStatus.valueOf(statusParam);
+                services().attendanceService().recordAttendance(e.getId(), date, status, user.getId());
+                recorded++;
+            } catch (IllegalArgumentException | NotFoundException | UnauthorizedActionException
+                    | ValidationException ex) {
+                flashError(req, "Could not record attendance for " + e.getStudentName() + ": "
+                        + ex.getMessage());
+            }
+        }
+        if (recorded > 0) {
+            flashSuccess(req, "Attendance recorded for " + recorded + " student(s).");
+        }
+        resp.sendRedirect(req.getContextPath() + "/faculty/attendance?courseId=" + courseId + "&date=" + date);
+    }
+
+    private Course requireOwnedCourse(long courseId, long facultyId) {
+        Course course = services().courseService().getById(courseId);
+        if (course.getFacultyId() == null || course.getFacultyId() != facultyId) {
+            throw new UnauthorizedActionException("You are not assigned to this course.");
+        }
+        return course;
+    }
+
+    private LocalDate parseDateOrToday(String value) {
+        if (value == null || value.isBlank()) {
+            return LocalDate.now();
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            return LocalDate.now();
+        }
+    }
+}
