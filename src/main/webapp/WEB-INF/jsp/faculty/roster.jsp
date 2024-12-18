@@ -4,7 +4,8 @@
 <div class="card">
     <h2>Roster - <c:out value="${course.code}"/>: <c:out value="${course.title}"/></h2>
     <p class="muted"><c:out value="${course.semester}"/> &middot;
-        <c:out value="${course.enrolledCount}"/> / <c:out value="${course.capacity}"/> enrolled</p>
+        <c:out value="${course.enrolledCount}"/> / <c:out value="${course.capacity}"/> enrolled &middot;
+        <a href="${pageContext.request.contextPath}/faculty/attendance?courseId=${course.id}">Mark attendance</a></p>
     <c:choose>
         <c:when test="${empty roster}">
             <p class="muted">No students are enrolled in this course yet.</p>

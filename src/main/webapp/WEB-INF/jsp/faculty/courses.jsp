@@ -24,8 +24,9 @@
                         <td><c:out value="${course.title}"/></td>
                         <td><c:out value="${course.semester}"/></td>
                         <td><c:out value="${course.enrolledCount}"/> / <c:out value="${course.capacity}"/></td>
-                        <td>
+                        <td class="actions-row">
                             <a class="btn" href="${pageContext.request.contextPath}/faculty/roster?courseId=${course.id}">Roster</a>
+                            <a class="btn btn-secondary" href="${pageContext.request.contextPath}/faculty/attendance?courseId=${course.id}">Attendance</a>
                         </td>
                     </tr>
                 </c:forEach>
