@@ -55,9 +55,17 @@ public class JdbcFacultyDao implements FacultyDao {
 
     @Override
     public void insert(long userId, String department, String title, String officeLocation) {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(conn, userId, department, title, officeLocation);
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to insert faculty for user " + userId, e);
+        }
+    }
+
+    @Override
+    public void insert(Connection conn, long userId, String department, String title, String officeLocation) {
         String sql = "INSERT INTO faculty (user_id, department, title, office_location) VALUES (?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             ps.setString(2, department);
             ps.setString(3, title);
