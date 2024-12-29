@@ -71,10 +71,19 @@ public class JdbcStudentDao implements StudentDao {
 
     @Override
     public void insert(long userId, String studentNumber, int enrollmentYear, String major, LocalDate dateOfBirth) {
+        try (Connection conn = dataSource.getConnection()) {
+            insert(conn, userId, studentNumber, enrollmentYear, major, dateOfBirth);
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to insert student for user " + userId, e);
+        }
+    }
+
+    @Override
+    public void insert(Connection conn, long userId, String studentNumber, int enrollmentYear, String major,
+            LocalDate dateOfBirth) {
         String sql = "INSERT INTO students (user_id, student_number, enrollment_year, major, date_of_birth) "
                 + "VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             ps.setString(2, studentNumber);
             ps.setInt(3, enrollmentYear);

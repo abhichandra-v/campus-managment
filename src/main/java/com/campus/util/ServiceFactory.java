@@ -20,7 +20,9 @@ import com.campus.service.CourseService;
 import com.campus.service.EnrollmentService;
 import com.campus.service.GradeService;
 import com.campus.service.ProfileService;
+import com.campus.service.ReportService;
 import com.campus.service.StudentService;
+import com.campus.service.UserManagementService;
 import jakarta.servlet.ServletContext;
 import javax.sql.DataSource;
 
@@ -49,6 +51,8 @@ public final class ServiceFactory {
     private final AttendanceService attendanceService;
     private final StudentService studentService;
     private final ProfileService profileService;
+    private final UserManagementService userManagementService;
+    private final ReportService reportService;
 
     private ServiceFactory(DataSource dataSource) {
         this.userDao = new JdbcUserDao(dataSource);
@@ -66,6 +70,8 @@ public final class ServiceFactory {
         this.attendanceService = new AttendanceService(attendanceDao, enrollmentDao, courseDao);
         this.studentService = new StudentService(studentDao);
         this.profileService = new ProfileService(userDao);
+        this.userManagementService = new UserManagementService(dataSource, userDao, studentDao, facultyDao);
+        this.reportService = new ReportService(studentDao, facultyDao, courseDao);
     }
 
     /** Returns the application-scoped ServiceFactory, creating it on first use. */
@@ -142,5 +148,13 @@ public final class ServiceFactory {
 
     public ProfileService profileService() {
         return profileService;
+    }
+
+    public UserManagementService userManagementService() {
+        return userManagementService;
+    }
+
+    public ReportService reportService() {
+        return reportService;
     }
 }

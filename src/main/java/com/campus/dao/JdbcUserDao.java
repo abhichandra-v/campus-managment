@@ -85,10 +85,18 @@ public class JdbcUserDao implements UserDao {
 
     @Override
     public long insert(User user) {
+        try (Connection conn = dataSource.getConnection()) {
+            return insert(conn, user);
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to insert user " + user.getUsername(), e);
+        }
+    }
+
+    @Override
+    public long insert(Connection conn, User user) {
         String sql = "INSERT INTO users (username, password_hash, role, email, full_name, is_active) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPasswordHash());
             ps.setString(3, user.getRole().name());
